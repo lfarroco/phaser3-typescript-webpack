@@ -10,7 +10,7 @@ import {
   ItemMap,
   ItemTypeSlots
 } from './Item/Model';
-import * as itemsJSON from './constants/items.json';
+import itemsJSON from './constants/items.json';
 import { idfy } from './utils/idfy';
 import { fromJSON } from './Unit/serializer';
 import { indexById } from './utils';
