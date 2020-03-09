@@ -1,0 +1,11 @@
+name,type,description,atk,m_atk,def,m_def,str,int,agi,dex,vit,wis,res_fire,res_wind,res_earth,res_water,res_light,res_shadow,atk_fire,atk_wind,atk_earth,atk_water,atk_light,atk_hadow
+Iron Sword,sword,A short sword,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Iron Armor,light_armor,A simple metal armor,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Iron Shield,shield,A simple metal shield,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Amulet,accessory,An amulet used in encantations,0,2,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Steel Sword,sword,A high quality sword,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Steel Armor,light_armor,A very resistant armor,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Steel Shield,shield,You can trust in this shield,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Baldar Sword,sword,One of the best swords that you can find,7,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Baldar Armor,light_armor,This armor can keep you safe,0,0,8,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Baldar Shield,shield,An unbreakable shield,0,0,9,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0

@@ -20,3 +20,4 @@ dump/
 higherVolume/
 yarn.lock
 package-lock.json
+.DS_Store
