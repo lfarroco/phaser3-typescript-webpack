@@ -6,6 +6,9 @@ import { SquadMember, SquadMemberMap, Squad } from '../Squad/Model';
 import { cartesianToIsometric } from '../utils/isometric';
 import { getUnit, saveSquad, saveSquadUnit } from '../DB';
 
+import UnitList from '../Unit/UnitListScene';
+import { Unit } from '../Unit/Model';
+
 type BoardTile = {
   sprite: Phaser.GameObjects.Image;
   x: number;
@@ -33,9 +36,11 @@ export class BoardScene extends Phaser.Scene {
   preload = preload;
 
   create(data: BoardSceneParameters) {
+    const { centerX, centerY, squad, tileWidth, tileHeight } = data;
+
     this.renderReturnBtn();
 
-    const { centerX, centerY, squad, tileWidth, tileHeight } = data;
+    this.renderUnitList(tileWidth, tileHeight);
 
     let dragStart: { x: number; y: number } | null = null;
     let isDragging = false;
@@ -194,6 +199,27 @@ export class BoardScene extends Phaser.Scene {
       }
     );
   }
+  private renderUnitList(tileWidth: number, tileHeight: number) {
+    const onDrag = (unit: Unit, x: number, y: number) => {
+      this.tiles.forEach(tile => tile.sprite.clearTint());
+      const boardSprite = findTileByXY({
+        tiles: this.tiles,
+        tileWidth,
+        tileHeight,
+        x: x,
+        y: y
+      });
+
+      if (boardSprite) boardSprite.sprite.setTint(0x33ff88);
+    };
+    const onDragEnd = (id: string, x: number, y: number) => {
+      console.log(`drag end`, id, x, y);
+    };
+
+    const unitList = new UnitList('unitList', this, onDrag, onDragEnd);
+    this.scene.add('unitList', unitList, true);
+  }
+
   renderReturnBtn() {
     const btn = this.add.text(1200, 100, 'Return to title');
     btn.setInteractive();

@@ -19,7 +19,6 @@ export function chara(
   onUnitDrag?: ((unit: any, x: number, y: number) => void) | undefined,
   onDragging?: ((x: number, y: number) => void) | undefined
 ) {
-
   const container = scene.add.container(cx, cy);
 
   const animatedUnit = animate(unit, container);
