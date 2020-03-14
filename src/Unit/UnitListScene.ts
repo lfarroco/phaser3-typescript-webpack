@@ -1,67 +1,73 @@
 import Phaser from 'phaser';
 import { Unit, UnitMap } from './Model';
 import { getUnits } from '../DB';
-import { chara } from '../Chara/chara';
+import { Chara } from '../Chara/chara';
 export default class UnitList extends Phaser.Scene {
-  parent: Phaser.Scene;
-  onDrag: (unit: Unit, x: number, y: number) => void;
-  onDragEnd: (id: string, x: number, y: number) => void;
-
   constructor(
     id: string,
-    parent: Phaser.Scene,
-    onDrag: (unit: Unit, x: number, y: number) => void,
-
-    onDragEnd: (unit: string, x: number, y: number) => void
+    public parent: Phaser.Scene,
+    public onDrag: (unit: Unit, x: number, y: number) => void,
+    public onDragEnd: (unit: string, x: number, y: number) => void
   ) {
     super(id);
-
-    console.log('constructor');
-
-    this.parent = parent;
-    this.onDrag = onDrag;
-    this.onDragEnd = onDragEnd;
-    return this;
   }
 
   create() {
-    console.log(`CREATE`, this);
-
     const units = getUnits();
+
+    const onClick = (unit: Unit) => console.log(`onclick`, unit);
+
+    const onDrag = (unit: Unit) => console.log(`dragging...`, unit.id);
+
+    const onDragEnd = (unit: Unit, x: number, y: number) =>
+      console.log(`dragend!`, unit, x, y);
 
     Object.values(units)
       .slice(0, 5)
       .forEach((unit, index) => {
-        const container = chara(this, unit, 50, 100 + 100 * index, 0.5, true);
-
-        container.setInteractive();
-        this.input.setDraggable(container);
-        this.input.on(
-          'drag',
-          (
-            pointer: Phaser.Input.Pointer,
-            obj: Phaser.GameObjects.Container,
-            x: number,
-            y: number
-          ) => {
-            obj.x = x;
-            obj.y = y;
-
-            this.onDrag(unit, x, y);
-          }
+        const key = 'unit-list-' + unit.id;
+        const chara = new Chara(
+          key,
+          this,
+          unit,
+          50,
+          100 + 100 * index,
+          0.5,
+          true,
+          onClick,
+          onDrag,
+          onDragEnd
         );
 
-        this.input.on(
-          'dragend',
-          (
-            pointer: Phaser.Input.Pointer,
-            obj: Phaser.GameObjects.Container,
-            x: number,
-            y: number
-          ) => {
-            this.onDragEnd(obj.name, x, y);
-          }
-        );
+        this.scene.add(key, chara, true);
+
+        // this.input.setDraggable(container);
+        // this.input.on(
+        //   'drag',
+        //   (
+        //     pointer: Phaser.Input.Pointer,
+        //     obj: Phaser.GameObjects.Container,
+        //     x: number,
+        //     y: number
+        //   ) => {
+        //     obj.x = x;
+        //     obj.y = y;
+
+        //     this.onDrag(unit, x, y);
+        //   }
+        // );
+
+        // this.input.on(
+        //   'dragend',
+        //   (
+        //     pointer: Phaser.Input.Pointer,
+        //     obj: Phaser.GameObjects.Container,
+        //     x: number,
+        //     y: number
+        //   ) => {
+        //     this.onDragEnd(obj.name, x, y);
+        //   }
+        // );
 
         this.add.text(100, 100 + 100 * index, unit.name);
       });

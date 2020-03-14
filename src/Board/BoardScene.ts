@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { chara } from '../Chara/chara';
+import { Chara } from '../Chara/chara';
 import { CenterX, CenterY, TileHeight, TileWidth } from '../Models';
 import { preload } from '../preload';
 import { SquadMember, SquadMemberMap, Squad } from '../Squad/Model';
@@ -30,7 +30,7 @@ export class BoardScene extends Phaser.Scene {
     super('BoardScene');
   }
 
-  unitList: Phaser.GameObjects.Container[] = [];
+  unitList: Chara[] = [];
   tiles: BoardTile[] = [];
 
   preload = preload;
@@ -54,7 +54,7 @@ export class BoardScene extends Phaser.Scene {
       mapWidth: 3,
       mapHeight: 3
     });
-    this.unitList = placeUnits({
+    this.unitList = this.placeUnits({
       scene: this,
       tileWidth,
       tileHeight,
@@ -63,141 +63,46 @@ export class BoardScene extends Phaser.Scene {
       squad
     });
 
-    this.input.on('dragstart', function(
-      pointer: Phaser.Input.Pointer,
-      gameObjects: Phaser.GameObjects.Container
-    ) {
-      dragStart = { x: pointer.x * 1, y: pointer.y * 1 };
-      //todo: fix typing? here it is returning GameObject[]
-      (gameObjects.list as Phaser.GameObjects.Sprite[]).map(sprite =>
-        sprite.setTint(0xeaeaea)
-      );
+    // this.input.on('dragstart', function(
+    //   pointer: Phaser.Input.Pointer,
+    //   gameObjects: Phaser.GameObjects.Container
+    // ) {
+    //   dragStart = { x: pointer.x * 1, y: pointer.y * 1 };
+    //   //todo: fix typing? here it is returning GameObject[]
+    //   (gameObjects.list as Phaser.GameObjects.Sprite[]).map(sprite =>
+    //     sprite.setTint(0xeaeaea)
+    //   );
 
-      gameObjects.depth = Infinity;
-    });
+    //   gameObjects.depth = Infinity;
+    // });
 
-    this.input.on(
-      'drag',
-      (
-        pointer: Phaser.Input.Pointer,
-        gameObject: { x: number; y: number },
-        dragX: number,
-        dragY: number
-      ) => {
-        if (
-          !isDragging &&
-          dragStart &&
-          Math.abs(dragStart.x - pointer.x) < tileWidth / 4
-        ) {
-          return;
-        } else {
-          isDragging = true;
-        }
-        this.tiles.map(boardSprite => boardSprite.sprite.clearTint());
+    // this.scene.scene.input.on(
+    //   'dragend',
+    //   (
+    //     pointer: Phaser.Input.Pointer,
+    //     gameObject: Phaser.GameObjects.Container
+    //   ) => {
+    //     if (
+    //       !isDragging &&
+    //       dragStart &&
+    //       Math.abs(dragStart.x - pointer.x) < tileWidth / 4
+    //     ) {
+    //       console.log(
+    //         `Drag stopped before end of treshold`,
+    //         Math.abs(dragStart.x - pointer.x),
+    //         tileWidth / 2
+    //       );
 
-        gameObject.x = dragX;
-        gameObject.y = dragY;
+    //       dragStart = null;
+    //       isDragging = false;
+    //       return;
+    //     }
 
-        const boardSprite = findTileByXY({
-          tiles: this.tiles,
-          tileWidth,
-          tileHeight,
-          x: dragX,
-          y: dragY
-        });
+    //     dragStart = null;
 
-        if (boardSprite) {
-          boardSprite.sprite.setTint(0x33ff88);
-          //if (onDragging) onDragging(dragX, dragY);
-        }
-      }
-    );
-
-    this.scene.scene.input.on(
-      'dragend',
-      (
-        pointer: Phaser.Input.Pointer,
-        gameObject: Phaser.GameObjects.Container
-      ) => {
-        if (
-          !isDragging &&
-          dragStart &&
-          Math.abs(dragStart.x - pointer.x) < tileWidth / 4
-        ) {
-          console.log(
-            `Drag stopped before end of treshold`,
-            Math.abs(dragStart.x - pointer.x),
-            tileWidth / 2
-          );
-
-          dragStart = null;
-          isDragging = false;
-          return;
-        }
-
-        dragStart = null;
-
-        const boardSprite = findTileByXY({
-          tiles: this.tiles,
-          tileWidth,
-          tileHeight,
-          x: gameObject.x,
-          y: gameObject.y
-        });
-
-        const squadMember = squad.members[gameObject.name];
-
-        if (!squadMember)
-          throw new Error('Invalid state. Unit should be in board object.');
-
-        const isMoved = () =>
-          (boardSprite && squadMember.x !== boardSprite.boardX) ||
-          (boardSprite && squadMember.y !== boardSprite.boardY);
-
-        if (boardSprite && isMoved()) {
-          const updatedSquadMember = {
-            ...squadMember,
-            x: boardSprite.boardX,
-            y: boardSprite.boardY
-          };
-
-          this.changeUnitPosition({
-            gameObject,
-            squad,
-            squadMember: updatedSquadMember,
-            tileWidth,
-            tileHeight,
-            centerX,
-            centerY,
-            boardSprite
-          });
-        } else {
-          const { x, y } = getUnitPositionInScreen(
-            squadMember,
-            tileWidth,
-            tileHeight,
-            centerX,
-            centerY
-          );
-
-          this.tweens.add({
-            targets: gameObject,
-            x: x,
-            y: y,
-            ease: 'Cubic',
-            duration: 400,
-            repeat: 0,
-            paused: false,
-            yoyo: false
-          });
-        }
-
-        this.tiles.map(boardSprite => boardSprite.sprite.clearTint());
-        (gameObject.list as Phaser.GameObjects.Image[]).map(sprite =>
-          sprite.clearTint()
-        );
-      }
-    );
+    //
+    //   }
+    // );
   }
   private renderUnitList(tileWidth: number, tileHeight: number) {
     const onDrag = (unit: Unit, x: number, y: number) => {
@@ -221,14 +126,14 @@ export class BoardScene extends Phaser.Scene {
   }
 
   renderReturnBtn() {
-    const btn = this.add.text(1200, 100, 'Return to title');
+    const btn = this.add.text(1100, 100, 'Return to title');
     btn.setInteractive();
     btn.on('pointerdown', () => {
       this.scene.start('TitleScene');
     });
   }
   changeUnitPosition({
-    gameObject,
+    unit,
     squad,
     squadMember,
     tileWidth,
@@ -237,7 +142,7 @@ export class BoardScene extends Phaser.Scene {
     centerY,
     boardSprite
   }: {
-    gameObject: Phaser.GameObjects.Container;
+    unit: Unit;
     squad: Squad;
     squadMember: SquadMember;
     tileWidth: number;
@@ -255,7 +160,7 @@ export class BoardScene extends Phaser.Scene {
     );
 
     this.tweens.add({
-      targets: gameObject,
+      targets: this.getChara(unit)?.container,
       x: x,
       y: y,
       ease: 'Cubic',
@@ -271,6 +176,146 @@ export class BoardScene extends Phaser.Scene {
       x: squadMember.x,
       y: squadMember.y
     });
+  }
+  onUnitDragEnd({
+    tiles,
+    squad,
+    tileWidth,
+    tileHeight,
+    centerX,
+    centerY
+  }: {
+    tiles: BoardTile[];
+    squad: Squad;
+    tileWidth: number;
+    tileHeight: number;
+    centerX: number;
+    centerY: number;
+  }) {
+    return (unit: Unit, x: number, y: number) => {
+      console.log(tiles, x, y);
+      const boardSprite = findTileByXY({
+        tiles: tiles,
+        tileWidth,
+        tileHeight,
+        x,
+        y
+      });
+
+      const squadMember = squad.members[unit.id];
+
+      if (!squadMember)
+        throw new Error('Invalid state. Unit should be in board object.');
+
+      const isMoved = () =>
+        (boardSprite && squadMember.x !== boardSprite.boardX) ||
+        (boardSprite && squadMember.y !== boardSprite.boardY);
+
+      console.log(`>>>`, boardSprite, isMoved());
+      if (boardSprite && isMoved()) {
+        const updatedSquadMember = {
+          ...squadMember,
+          x: boardSprite.boardX,
+          y: boardSprite.boardY
+        };
+
+        this.changeUnitPosition({
+          unit,
+          squad,
+          squadMember: updatedSquadMember,
+          tileWidth,
+          tileHeight,
+          centerX,
+          centerY,
+          boardSprite
+        });
+      } else {
+        const { x, y } = getUnitPositionInScreen(
+          squadMember,
+          tileWidth,
+          tileHeight,
+          centerX,
+          centerY
+        );
+
+        this.tweens.add({
+          targets: this.getChara(unit)?.container,
+          x: x,
+          y: y,
+          ease: 'Cubic',
+          duration: 400,
+          repeat: 0,
+          paused: false,
+          yoyo: false
+        });
+      }
+
+      this.tiles.map(boardSprite => boardSprite.sprite.clearTint());
+      (this.getChara(unit)?.container
+        ?.list as Phaser.GameObjects.Image[]).map(sprite => sprite.clearTint());
+    };
+  }
+  private getChara(unit: Unit) {
+    return this.unitList.find(chara => chara.key === this.makeUnitKey(unit));
+  }
+
+  placeUnits({
+    scene,
+    tileWidth,
+    tileHeight,
+    centerX,
+    centerY,
+    squad
+  }: {
+    scene: BoardScene;
+    tileWidth: number;
+    tileHeight: number;
+    centerX: number;
+    centerY: number;
+    squad: Squad;
+  }): Chara[] {
+    const initial: Chara[] = [];
+    const reducer = (acc: Chara[], squadMember: SquadMember) => {
+      const { x, y } = getUnitPositionInScreen(
+        squadMember,
+        tileWidth,
+        tileHeight,
+        centerX,
+        centerY
+      );
+
+      const unit = getUnit(squadMember.id);
+      if (!unit) return acc;
+
+      const key = this.makeUnitKey(unit);
+      const chara = new Chara(
+        key,
+        scene,
+        unit,
+        x,
+        y,
+        1,
+        true,
+        () => {},
+        onUnitDrag({ tiles: scene.tiles, tileWidth, tileHeight }),
+        this.onUnitDragEnd({
+          tiles: scene.tiles,
+          squad,
+          tileWidth,
+          tileHeight,
+          centerX,
+          centerY
+        })
+      );
+
+      scene.scene.add(key, chara, true);
+      return acc.concat([chara]);
+    };
+    return Object.values(squad.members).reduce(reducer, initial);
+  }
+
+  private makeUnitKey(unit: Unit) {
+    return `board-${unit.id}`;
   }
 }
 
@@ -294,54 +339,6 @@ function getUnitPositionInScreen(
   return { x, y: y - 230 };
 }
 
-function placeUnits({
-  scene,
-  tileWidth,
-  tileHeight,
-  centerX,
-  centerY,
-  squad
-}: {
-  scene: BoardScene;
-  tileWidth: number;
-  tileHeight: number;
-  centerX: number;
-  centerY: number;
-  squad: Squad;
-}): Phaser.GameObjects.Container[] {
-  const initial: Phaser.GameObjects.Container[] = [];
-  const reducer = (
-    acc: Phaser.GameObjects.Container[],
-    squadMember: SquadMember
-  ) => {
-    const { x, y } = getUnitPositionInScreen(
-      squadMember,
-      tileWidth,
-      tileHeight,
-      centerX,
-      centerY
-    );
-
-    const unit = getUnit(squadMember.id);
-    if (!unit) return acc;
-
-    return acc.concat([
-      chara(
-        scene,
-        unit,
-        x,
-        y,
-        1,
-        true,
-        () => {},
-        () => {},
-        onDragging({ tiles: scene.tiles, tileWidth, tileHeight })
-      )
-    ]);
-  };
-  return Object.values(squad.members).reduce(reducer, initial);
-}
-
 function onDragEnd(
   squadMember: SquadMember,
   tiles: BoardTile[],
@@ -349,7 +346,7 @@ function onDragEnd(
   tileHeight: number,
   onDragEndCallback: Function
 ) {
-  return function(unit: any, x: number, y: number) {
+  return function(unit: Unit, x: number, y: number) {
     const tile = tiles.find(
       isPointerInTile({ x: x, y: y }, tileWidth, tileHeight)
     );
@@ -378,19 +375,19 @@ function findTileByXY({
   return tiles.find(isPointerInTile({ x, y: y + 100 }, tileWidth, tileHeight));
 }
 
-function onDragging({
+function onUnitDrag({
   tiles,
   tileWidth,
   tileHeight
 }: {
-  tiles: any;
+  tiles: BoardTile[];
   tileWidth: number;
   tileHeight: number;
 }) {
-  return function(x: number, y: number) {
+  return function(unit: Unit, x: number, y: number) {
     const boardSprite = findTileByXY({ tiles, tileWidth, tileHeight, x, y });
 
-    tiles.map((tile: Phaser.GameObjects.Sprite) => tile.clearTint());
+    tiles.map(tile => tile.sprite.clearTint());
 
     if (boardSprite) {
       boardSprite.sprite.setTint(0x00cc00);
