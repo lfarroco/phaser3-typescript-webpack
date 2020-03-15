@@ -63,7 +63,6 @@ export class Chara extends Phaser.Scene {
     if (!this.container) return;
 
     if (this.onDrag) {
-      console.log(`making interactive`);
       this.container.setInteractive();
       this.input.setDraggable(this.container);
 

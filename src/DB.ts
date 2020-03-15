@@ -48,6 +48,7 @@ export const saveSquadUnit = ({
   x: number;
   y: number;
 }) => {
+  console.log(`save squad unit`, squadId, unitId, x, y);
   const squads = getSquads();
   const squad = squads[squadId];
   saveSquads({
@@ -57,9 +58,10 @@ export const saveSquadUnit = ({
       members: {
         ...squad.members,
         [unitId]: {
-          ...squad.members[unitId],
+          id: unitId,
           x,
-          y
+          y,
+          leader: squad.members[unitId]?.leader === true
         }
       }
     }
