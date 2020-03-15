@@ -4,7 +4,7 @@ import { CenterX, CenterY, TileHeight, TileWidth } from '../Models';
 import { preload } from '../preload';
 import { SquadMember, SquadMemberMap, Squad } from '../Squad/Model';
 import { cartesianToIsometric } from '../utils/isometric';
-import { getUnit, saveSquad, saveSquadUnit } from '../DB';
+import { getUnit, saveSquad, saveSquadUnit, addUnitToSquad } from '../DB';
 import UnitListScene from '../Unit/UnitListScene';
 import { Unit } from '../Unit/Model';
 
@@ -25,6 +25,7 @@ export type BoardSceneParameters = {
 };
 
 export class BoardScene extends Phaser.Scene {
+  unitListScene: UnitListScene | null = null;
   constructor() {
     super('BoardScene');
   }
@@ -39,10 +40,13 @@ export class BoardScene extends Phaser.Scene {
 
   preload = preload;
 
+  render() {
+    this.create(this);
+  }
   create(data: BoardSceneParameters) {
     const { centerX, centerY, squad, tileWidth, tileHeight } = data;
 
-    console.log(`squad:::`,squad)
+    console.log(`squad:::`, squad);
 
     this.tileWidth = tileWidth;
     this.tileHeight = tileHeight;
@@ -123,7 +127,7 @@ export class BoardScene extends Phaser.Scene {
 
       if (boardSprite) boardSprite.sprite.setTint(0x33ff88);
     };
-    const onDragEnd = (unit: Unit, x: number, y: number) => {
+    const onDragEnd = (unit: Unit, x: number, y: number, chara: Chara) => {
       const boardSprite = findTileByXY({
         tiles: this.tiles,
         tileWidth,
@@ -133,20 +137,22 @@ export class BoardScene extends Phaser.Scene {
       });
 
       if (boardSprite) {
-        this.changeUnitPosition({
+        const updatedSquad = addUnitToSquad(
           unit,
-          squadMember: {
-            id: unit.id,
-            leader: false,
-            x: boardSprite.boardX,
-            y: boardSprite.boardY
-          }
-        });
+          this.squad,
+          boardSprite.boardX,
+          boardSprite.boardY
+        );
+
+        this.squad = updatedSquad;
+
+        this.unitListScene?.removeUnit(unit);
+        this.addUnitToBoard(updatedSquad.members[unit.id]);
       }
     };
 
-    const unitList = new UnitListScene('unitList', this, onDrag, onDragEnd);
-    this.scene.add('unitList', unitList, true);
+    this.unitListScene = new UnitListScene('unitList', this, onDrag, onDragEnd);
+    this.scene.add('unitList', this.unitListScene, true);
   }
 
   renderReturnBtn() {
@@ -158,10 +164,12 @@ export class BoardScene extends Phaser.Scene {
   }
   changeUnitPosition({
     unit,
-    squadMember
+    squadMember,
+    chara
   }: {
     unit: Unit;
     squadMember: SquadMember;
+    chara?: Chara;
   }) {
     const { tileWidth, tileHeight, centerX, centerY, squad } = this;
     const { x, y } = getUnitPositionInScreen(
@@ -172,10 +180,15 @@ export class BoardScene extends Phaser.Scene {
       centerY
     );
 
-    console.log(`unit position in screen will be`,x,y)
+    console.log(`unit position in screen will be`, x, y);
 
+    const target = chara ? chara : this.getChara(unit);
+
+    if (chara) this.unitList.push(chara);
+
+    console.log(`target`, unit.name, target);
     this.tweens.add({
-      targets: this.getChara(unit)?.container,
+      targets: target?.container,
       x,
       y,
       ease: 'Cubic',
@@ -255,36 +268,48 @@ export class BoardScene extends Phaser.Scene {
     return this.unitList.find(chara => chara.key === this.makeUnitKey(unit));
   }
 
+  addUnitToBoard(squadMember: SquadMember) {
+    const { x, y } = getUnitPositionInScreen(
+      squadMember,
+      this.tileWidth,
+      this.tileHeight,
+      this.centerX,
+      this.centerY
+    );
+
+    const unit = getUnit(squadMember.id);
+
+    if (!unit) throw new Error('Invalid member supplied');
+
+    const key = this.makeUnitKey(unit);
+    const chara = new Chara(
+      key,
+      this,
+      unit,
+      x,
+      y,
+      1,
+      true,
+      () => {},
+      onUnitDrag({
+        tiles: this.tiles,
+        tileWidth: this.tileWidth,
+        tileHeight: this.tileHeight
+      }),
+      this.onUnitDragEnd()
+    );
+
+    this.scene.add(key, chara, true);
+
+    return chara;
+  }
+
   placeUnits(): Chara[] {
     const { tileWidth, tileHeight, squad, centerX, centerY } = this;
     const initial: Chara[] = [];
     const reducer = (acc: Chara[], squadMember: SquadMember) => {
-      const { x, y } = getUnitPositionInScreen(
-        squadMember,
-        this.tileWidth,
-        this.tileHeight,
-        this.centerX,
-        this.centerY
-      );
+      const chara = this.addUnitToBoard(squadMember);
 
-      const unit = getUnit(squadMember.id);
-      if (!unit) return acc;
-
-      const key = this.makeUnitKey(unit);
-      const chara = new Chara(
-        key,
-        this,
-        unit,
-        x,
-        y,
-        1,
-        true,
-        () => {},
-        onUnitDrag({ tiles: this.tiles, tileWidth, tileHeight }),
-        this.onUnitDragEnd()
-      );
-
-      this.scene.add(key, chara, true);
       return acc.concat([chara]);
     };
     return Object.values(squad.members).reduce(reducer, initial);

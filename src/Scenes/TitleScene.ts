@@ -2,13 +2,14 @@ import Phaser from 'phaser';
 import { BoardSceneParameters } from '../Board/BoardScene';
 import { getSquads } from '../DB';
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from '../constants';
+import defaultData from '../defaultData';
 
 const boardSceneConfig: BoardSceneParameters = {
   centerX: SCREEN_WIDTH / 2,
   centerY: SCREEN_HEIGHT / 2,
   tileWidth: 128,
   tileHeight: 64,
-  squad: getSquads()['0'],
+  squad: getSquads()['0']
 };
 
 export default class TitleScene extends Phaser.Scene {
@@ -16,7 +17,6 @@ export default class TitleScene extends Phaser.Scene {
     super('TitleScene');
   }
   create() {
-
     // dynamic creation of scenes
     // const item = new List("aaa",this,"derpino")
     // this.scene.add("aaa", item, true);
@@ -27,7 +27,10 @@ export default class TitleScene extends Phaser.Scene {
       this.scene.start('BoardScene', boardSceneConfig);
     });
 
-
+    const erase = this.add.text(100, 200, 'Erase Data');
+    erase.setInteractive();
+    erase.on('pointerdown', () => {
+      defaultData();
+    });
   }
-  
 }

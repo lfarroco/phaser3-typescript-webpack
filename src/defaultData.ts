@@ -18,7 +18,7 @@ import { SquadMap } from './Squad/Model';
 import { Player } from './Player/Model';
 
 // cleans up data on boot
-const OVERRIDE = false;
+const OVERRIDE = true;
 
 export const classes: UnitClass[] = ['fighter', 'apprentice'];
 

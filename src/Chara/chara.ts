@@ -20,7 +20,9 @@ export class Chara extends Phaser.Scene {
     public front: boolean,
     public onClick?: (unit: Unit) => void,
     public onDrag?: ((unit: Unit, x: number, y: number) => void) | undefined,
-    public onDragEnd?: ((unit: Unit, x: number, y: number) => void) | undefined
+    public onDragEnd?:
+      | ((unit: Unit, x: number, y: number, chara: Chara) => void)
+      | undefined
   ) {
     super(key);
     return this;
@@ -90,7 +92,8 @@ export class Chara extends Phaser.Scene {
             this.onDragEnd(
               this.unit,
               this.container?.x || 0,
-              this.container?.y || 0
+              this.container?.y || 0,
+              this
             );
         }
       );

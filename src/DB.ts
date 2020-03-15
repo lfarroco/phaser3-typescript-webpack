@@ -72,11 +72,11 @@ export const unitsWithoutSquad = () => unitsWithoutSquadSelector(getUnits());
 
 export const addUnitToSquad = (
   unit: Unit,
-  squad: any,
+  squad: Squad,
   x: number,
   y: number
 ) => {
-  const updatedUnit = { ...unit, squad: squad };
+  const updatedUnit = { ...unit, squad: squad.id };
 
   const { members } = squad;
 
@@ -93,6 +93,8 @@ export const addUnitToSquad = (
 
   saveUnit(updatedUnit);
   saveSquad(updatedSquad);
+
+  return updatedSquad;
 };
 export const changeUnitPosition = (
   unit: SquadMember,
