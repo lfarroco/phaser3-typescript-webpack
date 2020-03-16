@@ -46,8 +46,6 @@ export class BoardScene extends Phaser.Scene {
   create(data: BoardSceneParameters) {
     const { centerX, centerY, squad, tileWidth, tileHeight } = data;
 
-    console.log(`squad:::`, squad);
-
     this.tileWidth = tileWidth;
     this.tileHeight = tileHeight;
     this.centerX = centerX;
@@ -58,60 +56,11 @@ export class BoardScene extends Phaser.Scene {
 
     this.renderUnitList();
 
-    let dragStart: { x: number; y: number } | null = null;
-    let isDragging = false;
-
-    this.tiles = placeTiles({
-      manaScene: this,
-      tileWidth,
-      tileHeight,
-      centerX,
-      centerY,
+    this.tiles = this.placeTiles({
       mapWidth: 3,
       mapHeight: 3
     });
     this.unitList = this.placeUnits();
-
-    // this.input.on('dragstart', function(
-    //   pointer: Phaser.Input.Pointer,
-    //   gameObjects: Phaser.GameObjects.Container
-    // ) {
-    //   dragStart = { x: pointer.x * 1, y: pointer.y * 1 };
-    //   //todo: fix typing? here it is returning GameObject[]
-    //   (gameObjects.list as Phaser.GameObjects.Sprite[]).map(sprite =>
-    //     sprite.setTint(0xeaeaea)
-    //   );
-
-    //   gameObjects.depth = Infinity;
-    // });
-
-    // this.scene.scene.input.on(
-    //   'dragend',
-    //   (
-    //     pointer: Phaser.Input.Pointer,
-    //     gameObject: Phaser.GameObjects.Container
-    //   ) => {
-    //     if (
-    //       !isDragging &&
-    //       dragStart &&
-    //       Math.abs(dragStart.x - pointer.x) < tileWidth / 4
-    //     ) {
-    //       console.log(
-    //         `Drag stopped before end of treshold`,
-    //         Math.abs(dragStart.x - pointer.x),
-    //         tileWidth / 2
-    //       );
-
-    //       dragStart = null;
-    //       isDragging = false;
-    //       return;
-    //     }
-
-    //     dragStart = null;
-
-    //
-    //   }
-    // );
   }
   private renderUnitList() {
     const { tileWidth, tileHeight } = this;
@@ -159,6 +108,10 @@ export class BoardScene extends Phaser.Scene {
     const btn = this.add.text(1100, 100, 'Return to title');
     btn.setInteractive();
     btn.on('pointerdown', () => {
+      this.children.removeAll();
+      this.scene.remove('unitList');
+      this.unitListScene?.rows.forEach(row => this.scene.remove(row.chara.key));
+      this.unitList.forEach(unit => this.scene.remove(unit.key));
       this.scene.start('TitleScene');
     });
   }
@@ -267,6 +220,51 @@ export class BoardScene extends Phaser.Scene {
   private getChara(unit: Unit) {
     return this.unitList.find(chara => chara.key === this.makeUnitKey(unit));
   }
+  placeTiles({ mapWidth, mapHeight }: { mapWidth: number; mapHeight: number }) {
+    var grid: null[][] = [[]];
+    let tiles: BoardTile[] = [];
+
+    for (var x = 0; x < mapWidth; x++) {
+      grid[x] = [];
+      for (var y = 0; y < mapHeight; y++) grid[x][y] = null;
+    }
+
+    grid.forEach((row, yIndex) => {
+      row.forEach((_, xIndex) => {
+        var { x, y } = cartesianToIsometric(
+          xIndex,
+          yIndex,
+          this.centerX,
+          this.centerY,
+          this.tileWidth,
+          this.tileHeight
+        );
+
+        const tileSprite = this.add.image(x, y, 'tile');
+        tileSprite.depth = y;
+
+        tileSprite.setInteractive();
+
+        tiles.push({
+          sprite: tileSprite,
+          x,
+          y,
+          boardX: xIndex + 1,
+          boardY: yIndex + 1
+        });
+      });
+    });
+
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      this.tiles
+        .filter(isPointerInTile(pointer, this.tileWidth, this.tileHeight))
+        .forEach(tile => {
+          console.log(`clicked>>`, tile.x, tile.y);
+        });
+    });
+
+    return tiles;
+  }
 
   addUnitToBoard(squadMember: SquadMember) {
     const { x, y } = getUnitPositionInScreen(
@@ -291,11 +289,7 @@ export class BoardScene extends Phaser.Scene {
       1,
       true,
       () => {},
-      onUnitDrag({
-        tiles: this.tiles,
-        tileWidth: this.tileWidth,
-        tileHeight: this.tileHeight
-      }),
+      this.onUnitDrag(),
       this.onUnitDragEnd()
     );
 
@@ -303,13 +297,33 @@ export class BoardScene extends Phaser.Scene {
 
     return chara;
   }
+  onUnitDrag() {
+    return (unit: Unit, x: number, y: number) => {
+      const boardSprite = findTileByXY({
+        tiles: this.tiles,
+        tileWidth: this.tileWidth,
+        tileHeight: this.tileHeight,
+        x,
+        y
+      });
+
+      this.tiles.map(tile => tile.sprite.clearTint());
+
+      if (boardSprite) {
+        boardSprite.sprite.setTint(0x00cc00);
+      }
+
+      this.scene.bringToTop(this.makeUnitKey(unit));
+
+      if (unit.container) unit.container.depth = Infinity;
+    };
+  }
 
   placeUnits(): Chara[] {
     const { tileWidth, tileHeight, squad, centerX, centerY } = this;
     const initial: Chara[] = [];
     const reducer = (acc: Chara[], squadMember: SquadMember) => {
       const chara = this.addUnitToBoard(squadMember);
-
       return acc.concat([chara]);
     };
     return Object.values(squad.members).reduce(reducer, initial);
@@ -374,88 +388,6 @@ function findTileByXY({
   y: number;
 }) {
   return tiles.find(isPointerInTile({ x, y: y + 100 }, tileWidth, tileHeight));
-}
-
-function onUnitDrag({
-  tiles,
-  tileWidth,
-  tileHeight
-}: {
-  tiles: BoardTile[];
-  tileWidth: number;
-  tileHeight: number;
-}) {
-  return function(unit: Unit, x: number, y: number) {
-    const boardSprite = findTileByXY({ tiles, tileWidth, tileHeight, x, y });
-
-    tiles.map(tile => tile.sprite.clearTint());
-
-    if (boardSprite) {
-      boardSprite.sprite.setTint(0x00cc00);
-    }
-  };
-}
-
-function placeTiles({
-  manaScene,
-  tileWidth,
-  tileHeight,
-  centerX,
-  centerY,
-  mapWidth,
-  mapHeight
-}: {
-  manaScene: BoardScene;
-  tileWidth: number;
-  tileHeight: number;
-  centerX: number;
-  centerY: number;
-  mapWidth: number;
-  mapHeight: number;
-}) {
-  var grid: null[][] = [[]];
-  let tiles: BoardTile[] = [];
-
-  for (var x = 0; x < mapWidth; x++) {
-    grid[x] = [];
-    for (var y = 0; y < mapHeight; y++) grid[x][y] = null;
-  }
-
-  grid.forEach((row, yIndex) => {
-    row.forEach((_, xIndex) => {
-      var { x, y } = cartesianToIsometric(
-        xIndex,
-        yIndex,
-        centerX,
-        centerY,
-        tileWidth,
-        tileHeight
-      );
-
-      const tileSprite = manaScene.add.image(x, y, 'tile');
-      tileSprite.depth = y;
-
-      tileSprite.setInteractive();
-
-      tiles.push({
-        sprite: tileSprite,
-        x,
-        y,
-        boardX: xIndex + 1,
-        boardY: yIndex + 1
-      });
-    });
-  });
-
-  manaScene.input.on('pointerdown', function(pointer: Phaser.Input.Pointer) {
-    manaScene.tiles
-      .filter(isPointerInTile(pointer, tileWidth, tileHeight))
-      .forEach(tile => {
-        console.log(`clicked>>`, tile.x, tile.y);
-      });
-  });
-
-  return tiles;
 }
 
 function isPointerInTile(

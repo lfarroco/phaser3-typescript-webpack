@@ -1,6 +1,6 @@
 import * as Phaser from 'phaser';
 
-export default (parent:string, x:number, y:number, scale:number) => {
+export default (parent: string, x: number, y: number, scale: number) => {
   var phaserConfig = {
     type: Phaser.AUTO,
     width: 120,
@@ -16,7 +16,7 @@ export default (parent:string, x:number, y:number, scale:number) => {
   new Phaser.Game(phaserConfig);
 };
 
-function preload(this:Phaser.Scene) {
+function preload(this: Phaser.Scene) {
   const headImg = 'https://i.postimg.cc/7ZDbQ6nr/head.png';
   const trunkImg = 'https://i.postimg.cc/C5LmNYrG/trunk.png';
   const handImg = 'https://i.postimg.cc/rF9qs9x7/hand.svg';
@@ -28,19 +28,24 @@ function preload(this:Phaser.Scene) {
   this.load.image('foot', footImg);
 }
 
-function create( x:number, y:number, scale:number) {
-  return function(this:Phaser.Scene) {
+function create(x: number, y: number, scale: number) {
+  return function(this: Phaser.Scene) {
     chara(this, x, y, scale);
   };
 }
 
-export function chara(parent:Phaser.Scene, x:number, y:number, scale:number) {
+export function chara(
+  parent: Phaser.Scene,
+  x: number,
+  y: number,
+  scale: number
+) {
   var cx = x;
   var cy = y;
 
   var container = parent.add.container(cx, cy);
 
-  function renderHead(gx:number, gy:number) {
+  function renderHead(gx: number, gy: number) {
     const head = parent.add.image(gx, gy, 'head');
 
     parent.tweens.add({
@@ -96,5 +101,5 @@ export function chara(parent:Phaser.Scene, x:number, y:number, scale:number) {
   renderHand(-10, 120);
 
   container.scale = scale;
-  container.depth = 10000 + cy;
+  container.depth = cy;
 }

@@ -4,7 +4,7 @@ import { getUnits } from '../DB';
 import { Chara } from '../Chara/Chara';
 
 export default class UnitList extends Phaser.Scene {
-  units: Unit[];
+  rows: { chara: Chara; text: Phaser.GameObjects.Text }[];
   page: number;
   totalPages: number;
   itemsPerPage: number;
@@ -16,10 +16,10 @@ export default class UnitList extends Phaser.Scene {
     public onDragEnd: (unit: Unit, x: number, y: number, chara: Chara) => void
   ) {
     super(id);
-    this.units = [];
+    this.rows = [];
     this.page = 0;
     this.totalPages = 0;
-    this.itemsPerPage = 5;
+    this.itemsPerPage = 6;
   }
 
   create() {
@@ -36,30 +36,36 @@ export default class UnitList extends Phaser.Scene {
     // const onDragEnd = (unit: Unit, x: number, y: number) =>
     //   console.log(`dragend!`, unit, x, y);
 
-    this.units = Object.values(units).slice(
+    const unitsToRender = Object.values(units).slice(
       this.page * this.itemsPerPage,
       this.page * this.itemsPerPage + this.itemsPerPage
     );
 
-    this.units.forEach((unit, index) => {
-      const lineHeight = 200;
+    unitsToRender.forEach((unit, index) => {
+      const { charaX, charaY, textX, textY } = getPosition(index);
       const key = this.makeUnitKey(unit);
       const chara = new Chara(
         key,
         this,
         unit,
-        50,
-        100 + lineHeight * index,
-        1,
+        charaX,
+        charaY,
+        0.5,
         true,
         onClick,
-        onDrag,
+        () => {
+          chara.container?.setScale(1);
+          this.scene.bringToTop(key);
+          return onDrag;
+        },
         this.onDragEnd
       );
 
       this.scene.add(key, chara, true);
 
-      this.add.text(100, 100 + lineHeight * index, unit.name);
+      const text = this.add.text(textX, textY, unit.name);
+
+      this.rows.push({ chara, text });
     });
   }
 
@@ -67,19 +73,54 @@ export default class UnitList extends Phaser.Scene {
     return 'unit-list-' + unit.id;
   }
 
-  update() {}
+  reposition(
+    { chara, text }: { chara: Chara; text: Phaser.GameObjects.Text },
+    index: number
+  ) {
+    const { charaX, charaY, textX, textY } = getPosition(index);
 
-  refreshScene() {
-    this.children.removeAll();
-
-    this.units.forEach(unit => this.scene.remove(this.makeUnitKey(unit)));
-
-    this.render();
+    this.tweens.add({
+      targets: chara.container,
+      x: charaX,
+      y: charaY,
+      duration: 600,
+      ease: 'Cubic',
+      repeat: 0,
+      paused: false,
+      yoyo: false
+    });
+    this.tweens.add({
+      targets: text,
+      x: textX,
+      y: textY,
+      duration: 600,
+      ease: 'Cubic',
+      repeat: 0,
+      paused: false,
+      yoyo: false
+    });
   }
 
   removeUnit(unit: Unit) {
-    this.units.forEach(u =>
-      u.id === unit.id ? this.scene.remove(this.makeUnitKey(unit)) : u
-    );
+    const findUnit = (row: {
+      chara: Chara;
+      text: Phaser.GameObjects.Text;
+    }): boolean => row.chara.key === this.makeUnitKey(unit);
+    this.rows.filter(findUnit).forEach(row => {
+      this.scene.remove(this.makeUnitKey(unit));
+      this.children.remove(row.text);
+    });
+
+    this.rows = this.rows.filter(row => !findUnit(row));
+    this.rows.forEach((row, index) => this.reposition(row, index));
   }
+}
+function getPosition(n: number) {
+  const lineHeight = 100;
+  return {
+    charaX: 50,
+    charaY: 50 + lineHeight * n,
+    textX: 100,
+    textY: 50 + lineHeight * n
+  };
 }

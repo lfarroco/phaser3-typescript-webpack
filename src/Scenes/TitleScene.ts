@@ -6,7 +6,7 @@ import defaultData from '../defaultData';
 
 const boardSceneConfig: BoardSceneParameters = {
   centerX: SCREEN_WIDTH / 2,
-  centerY: SCREEN_HEIGHT / 2,
+  centerY: SCREEN_HEIGHT / 2 - 100,
   tileWidth: 128,
   tileHeight: 64,
   squad: getSquads()['0']

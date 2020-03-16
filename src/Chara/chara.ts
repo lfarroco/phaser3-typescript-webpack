@@ -30,6 +30,8 @@ export class Chara extends Phaser.Scene {
   create() {
     this.container = this.add.container(this.cx, this.cy);
 
+    this.container.depth = this.cy;
+
     const animatedUnit = animate(this.unit, this.container);
 
     console.log(this.front);
@@ -39,12 +41,10 @@ export class Chara extends Phaser.Scene {
       renderBackCharacter(this, animatedUnit);
     }
 
-    this.container.depth = 5 * this.cy;
-
     this.maybeRenderInsignea();
 
     //todo: auto adjust
-    this.container.setSize(200, 200);
+    this.container.setSize(100, 200);
 
     this.container.scale = this.scaleSizing;
 
@@ -76,6 +76,9 @@ export class Chara extends Phaser.Scene {
           x: number,
           y: number
         ) => {
+          // console.log(`???`, this.container);
+          // if (this.container) this.container.depth = Infinity;
+
           obj.x = x;
           obj.y = y;
 
@@ -88,6 +91,9 @@ export class Chara extends Phaser.Scene {
       this.container.on(
         'dragend',
         (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+          if (this.container) {
+            this.container.depth = dragY;
+          }
           if (this.onDragEnd)
             this.onDragEnd(
               this.unit,
