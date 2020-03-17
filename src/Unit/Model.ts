@@ -44,8 +44,6 @@ export interface Unit {
   };
   elem: Elem;
   leader?: boolean;
-  container?: Phaser.GameObjects.Container;
-  tweens?: Phaser.Tweens.Tween[];
 }
 
 interface Animated {

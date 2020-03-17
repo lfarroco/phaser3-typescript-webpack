@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { Unit, UnitMap, getUnitsWithoutSquad } from './Model';
 import { getUnits } from '../DB';
 import { Chara } from '../Chara/Chara';
+import { error, INVALID_STATE } from '../errors';
 
 export default class UnitList extends Phaser.Scene {
   rows: { chara: Chara; text: Phaser.GameObjects.Text }[];
@@ -42,7 +43,7 @@ export default class UnitList extends Phaser.Scene {
     );
 
     unitsToRender.forEach((unit, index) => {
-      const { charaX, charaY, textX, textY } = getPosition(index);
+      const { charaX, charaY, textX, textY } = this.getUnitPosition(index);
       const key = this.makeUnitKey(unit);
       const chara = new Chara(
         key,
@@ -54,7 +55,7 @@ export default class UnitList extends Phaser.Scene {
         true,
         onClick,
         () => {
-          chara.container?.setScale(1);
+          this.scaleUp(chara);
           this.scene.bringToTop(key);
           return onDrag;
         },
@@ -69,7 +70,56 @@ export default class UnitList extends Phaser.Scene {
     });
   }
 
-  private makeUnitKey(unit: Unit) {
+  private getUnitPosition(index: number) {
+    const lineHeight = 100;
+    return {
+      charaX: 50,
+      charaY: 50 + lineHeight * index,
+      textX: 100,
+      textY: 50 + lineHeight * index
+    };
+  }
+
+  private getUnitIndex(unit: Unit) {
+    return this.rows.findIndex(row => row.chara.key === this.makeUnitKey(unit));
+  }
+
+  returnToOriginalPosition(unit: Unit) {
+    const index = this.getUnitIndex(unit);
+
+    const row = this.rows.find(row => row.chara.key === this.makeUnitKey(unit));
+
+    if (!row) {
+      return error(INVALID_STATE);
+    }
+
+    this.reposition(row, index);
+  }
+
+  scaleUp(chara: Chara) {
+    this.tweens.add({
+      targets: chara.container,
+      scale: 1,
+      duration: 400,
+      ease: 'Cubic',
+      repeat: 0,
+      paused: false,
+      yoyo: false
+    });
+  }
+  scaleDown(chara: Chara) {
+    this.tweens.add({
+      targets: chara.container,
+      scale: 0.5,
+      duration: 400,
+      ease: 'Cubic',
+      repeat: 0,
+      paused: false,
+      yoyo: false
+    });
+  }
+
+  makeUnitKey(unit: Unit) {
     return 'unit-list-' + unit.id;
   }
 
@@ -77,7 +127,7 @@ export default class UnitList extends Phaser.Scene {
     { chara, text }: { chara: Chara; text: Phaser.GameObjects.Text },
     index: number
   ) {
-    const { charaX, charaY, textX, textY } = getPosition(index);
+    const { charaX, charaY, textX, textY } = this.getUnitPosition(index);
 
     this.tweens.add({
       targets: chara.container,
@@ -114,13 +164,4 @@ export default class UnitList extends Phaser.Scene {
     this.rows = this.rows.filter(row => !findUnit(row));
     this.rows.forEach((row, index) => this.reposition(row, index));
   }
-}
-function getPosition(n: number) {
-  const lineHeight = 100;
-  return {
-    charaX: 50,
-    charaY: 50 + lineHeight * n,
-    textX: 100,
-    textY: 50 + lineHeight * n
-  };
 }

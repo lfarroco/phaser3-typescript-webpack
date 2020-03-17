@@ -85,6 +85,8 @@ export class BoardScene extends Phaser.Scene {
         y: y
       });
 
+      console.log(`dropped on `, boardSprite);
+
       if (boardSprite) {
         const updatedSquad = addUnitToSquad(
           unit,
@@ -97,6 +99,11 @@ export class BoardScene extends Phaser.Scene {
 
         this.unitListScene?.removeUnit(unit);
         this.addUnitToBoard(updatedSquad.members[unit.id]);
+      } else {
+        console.log(`lets return`, unit, this.unitListScene?.rows);
+
+        this.unitListScene?.returnToOriginalPosition(unit);
+        this.unitListScene?.scaleDown(chara);
       }
     };
 
@@ -314,8 +321,6 @@ export class BoardScene extends Phaser.Scene {
       }
 
       this.scene.bringToTop(this.makeUnitKey(unit));
-
-      if (unit.container) unit.container.depth = Infinity;
     };
   }
 
