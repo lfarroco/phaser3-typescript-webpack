@@ -1,16 +1,6 @@
 import Phaser from 'phaser';
-import { BoardSceneParameters } from '../Board/BoardScene';
 import { getSquads } from '../DB';
-import { SCREEN_WIDTH, SCREEN_HEIGHT } from '../constants';
 import defaultData from '../defaultData';
-
-const boardSceneConfig: BoardSceneParameters = {
-  centerX: SCREEN_WIDTH / 2,
-  centerY: SCREEN_HEIGHT / 2 - 100,
-  tileWidth: 128,
-  tileHeight: 64,
-  squad: getSquads()['0']
-};
 
 export default class TitleScene extends Phaser.Scene {
   constructor() {
@@ -21,16 +11,23 @@ export default class TitleScene extends Phaser.Scene {
     // const item = new List("aaa",this,"derpino")
     // this.scene.add("aaa", item, true);
 
-    const btn = this.add.text(100, 100, 'Edit Squad', { color: '#fff' });
-    btn.setInteractive();
-    btn.on('pointerdown', () => {
-      this.scene.start('BoardScene', boardSceneConfig);
+    const editSquad = this.add.text(10, 100, 'Edit Squad', { color: '#fff' });
+    editSquad.setInteractive();
+    editSquad.on('pointerdown', () => {
+      this.scene.start('EditSquadScene', getSquads()[0]);
     });
 
-    const erase = this.add.text(100, 200, 'Erase Data');
+    const listSquads = this.add.text(10, 200, 'List Squads', { color: '#fff' });
+    listSquads .setInteractive();
+    listSquads .on('pointerdown', () => {
+      //this.scene.start('BoardScene', boardSceneConfig);
+    });
+
+    const erase = this.add.text(10, 600, 'Erase Data');
     erase.setInteractive();
     erase.on('pointerdown', () => {
       defaultData();
+      alert("Data erased!")
     });
   }
 }

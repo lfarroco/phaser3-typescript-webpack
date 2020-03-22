@@ -1,5 +1,6 @@
 import { Modifier, ItemSlot, ItemMap } from '../Item/Model';
 import { sum } from '../utils/math';
+import { Container } from '../Models';
 
 export type UnitMap = { [x: string]: Unit };
 
@@ -48,7 +49,7 @@ export interface Unit {
 
 interface Animated {
   tweens: Phaser.Tweens.Tween[];
-  container: Phaser.GameObjects.Container;
+  container: Container;
 }
 
 /**

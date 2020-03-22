@@ -23,4 +23,10 @@ export function preload(this: {
       PUBLIC_URL + '/back_trunk.svg'
     );
   });
+
+  const ui = ['arrow_right'];
+  ui.forEach((id: string) => {
+    this.load.image(id, `${PUBLIC_URL}/ui/${id}.svg`);
+  });
+
 }

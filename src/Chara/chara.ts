@@ -1,15 +1,16 @@
 import * as Phaser from 'phaser';
 
-import { Unit, AnimatedUnit } from '../Unit/Model';
-import { animate } from './animations/animate';
-import { error, NOT_IMPLEMENTED } from '../errors';
+import {Unit, AnimatedUnit} from '../Unit/Model';
+import {animate} from './animations/animate';
+import {error, NOT_IMPLEMENTED} from '../errors';
+import {Container, Pointer} from '../Models';
 
 export function singleChara(unit: Unit, front = true, onClick = () => {}) {
   error(NOT_IMPLEMENTED);
 }
 
 export class Chara extends Phaser.Scene {
-  container: Phaser.GameObjects.Container | null = null;
+  container: Container | null = null;
   constructor(
     public key: string,
     public parent: Phaser.Scene,
@@ -22,7 +23,7 @@ export class Chara extends Phaser.Scene {
     public onDrag?: ((unit: Unit, x: number, y: number) => void) | undefined,
     public onDragEnd?:
       | ((unit: Unit, x: number, y: number, chara: Chara) => void)
-      | undefined
+      | undefined,
   ) {
     super(key);
     return this;
@@ -34,7 +35,6 @@ export class Chara extends Phaser.Scene {
 
     const animatedUnit = animate(this.unit, this.container);
 
-    console.log(this.front);
     if (this.front) {
       renderFrontCharacter(this, animatedUnit);
     } else {
@@ -43,8 +43,24 @@ export class Chara extends Phaser.Scene {
 
     this.maybeRenderInsignea();
 
-    //todo: auto adjust
-    this.container.setSize(100, 200);
+    const container_width = 100;
+    const container_height = 170;
+
+    this.container.setSize(container_width, container_height);
+
+    // DEBUG DRAG CONTAINER
+    //var rect = new Phaser.Geom.Rectangle(
+    //  (-1 * container_width) / 2,
+    //  (-1 * container_height) / 2,
+    //  container_width,
+    //  container_height,
+    //);
+    //
+    //var graphics = this.add.graphics({fillStyle: {color: 0x0000ff}});
+    //graphics.alpha = 0.5;
+    //
+    //graphics.fillRectShape(rect);
+    //this.container.add(graphics);
 
     this.container.scale = this.scaleSizing;
 
@@ -70,12 +86,7 @@ export class Chara extends Phaser.Scene {
 
       this.input.on(
         'drag',
-        (
-          pointer: Phaser.Input.Pointer,
-          obj: Phaser.GameObjects.Container,
-          x: number,
-          y: number
-        ) => {
+        (pointer: Pointer, obj: Container, x: number, y: number) => {
           // console.log(`???`, this.container);
           // if (this.container) this.container.depth = Infinity;
 
@@ -83,14 +94,14 @@ export class Chara extends Phaser.Scene {
           obj.y = y;
 
           if (this.onDrag) this.onDrag(this.unit, x, y);
-        }
+        },
       );
     }
 
     if (this.onDragEnd)
       this.container.on(
         'dragend',
-        (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+        (pointer: Pointer, dragX: number, dragY: number) => {
           if (this.container) {
             this.container.depth = dragY;
           }
@@ -99,13 +110,13 @@ export class Chara extends Phaser.Scene {
               this.unit,
               this.container?.x || 0,
               this.container?.y || 0,
-              this
+              this,
             );
-        }
+        },
       );
 
     if (this.onClick)
-      this.container.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      this.container.on('pointerdown', (pointer: Pointer) => {
         console.log(`clicked`, this.unit);
 
         if (this.onClick) this.onClick(this.unit);
@@ -122,7 +133,7 @@ function renderFrontCharacter(scene: Chara, unit: AnimatedUnit) {
       y: gy - 2,
       duration: 1600,
       yoyo: true,
-      repeat: -1
+      repeat: -1,
     });
 
     scene.container?.add(head);
@@ -140,7 +151,7 @@ function renderFrontCharacter(scene: Chara, unit: AnimatedUnit) {
     const trunk = scene.add.image(
       trunkX,
       trunkY,
-      'trunk' + unit.style.trunk.toString()
+      'trunk' + unit.style.trunk.toString(),
     );
 
     scene.tweens.add({
@@ -148,7 +159,7 @@ function renderFrontCharacter(scene: Chara, unit: AnimatedUnit) {
       y: trunkY + 2,
       duration: 1600,
       yoyo: true,
-      repeat: -1
+      repeat: -1,
     });
 
     scene.container?.add(trunk);
@@ -162,7 +173,7 @@ function renderFrontCharacter(scene: Chara, unit: AnimatedUnit) {
       y: handY + 8,
       duration: 1600,
       yoyo: true,
-      repeat: -1
+      repeat: -1,
     });
 
     scene.container?.add(hand);
@@ -184,7 +195,7 @@ function renderBackCharacter(scene: Chara, unit: AnimatedUnit) {
     const head = scene.add.image(
       gx,
       gy,
-      'back_head' + unit.style.head.toString()
+      'back_head' + unit.style.head.toString(),
     );
 
     scene.tweens.add({
@@ -192,7 +203,7 @@ function renderBackCharacter(scene: Chara, unit: AnimatedUnit) {
       y: gy - 2,
       duration: 1600,
       yoyo: true,
-      repeat: -1
+      repeat: -1,
     });
 
     scene.container?.add(head);
@@ -212,7 +223,7 @@ function renderBackCharacter(scene: Chara, unit: AnimatedUnit) {
     const trunk = scene.add.image(
       trunkX,
       trunkY,
-      'back_trunk' + unit.style.trunk.toString()
+      'back_trunk' + unit.style.trunk.toString(),
     );
 
     scene.tweens.add({
@@ -220,7 +231,7 @@ function renderBackCharacter(scene: Chara, unit: AnimatedUnit) {
       y: trunkY + 2,
       duration: 1600,
       yoyo: true,
-      repeat: -1
+      repeat: -1,
     });
 
     scene.container?.add(trunk);
@@ -234,7 +245,7 @@ function renderBackCharacter(scene: Chara, unit: AnimatedUnit) {
       y: handY + 8,
       duration: 1600,
       yoyo: true,
-      repeat: -1
+      repeat: -1,
     });
 
     scene.container?.add(hand);
